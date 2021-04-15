@@ -17,3 +17,10 @@ python3 objectiveFunction.py moduleGenes.txt coexpressionDistanceMatrix.txt umiC
 Output:
 2 files will be outputted. One will have the name that you inputted as the output file name. This will give you a file containing per gene the gene name, log base 10 scaled output value, and raw objective function value. The other will have your file modifier + 'LHSAndRHSValues.txt' which tells you what the values of the right and left sides of the objective function is for your dataset.
 An example of the log + raw output is M1TestRun.txt. An example of the LHS and RHS output file is M1TestRunEndLHSAndRHSValues.txt
+
+A small example using the test input files:
+python3 objectiveFunction.py miniModuleGenes.txt coexpressionExampleInput.txt miniUMIInputFile.txt miniSeuratOutput.csv miniOutput.txt mini 0
+This will give you nan for the right hand side, because there are not enough cells in the miniSeuratOutput.csv, but it can serve as a proof that the function is running.
+
+
+seurat_process.R: This is used to produce the cell by cell distance matrix. run R and seurat_process.R.
