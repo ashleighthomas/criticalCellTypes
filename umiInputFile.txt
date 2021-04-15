@@ -1,0 +1,17 @@
+/example/file/path/to/umi/counts/
+EndUMICounts.txt
+ExDp2UMICounts.txt
+ExM-UUMICounts.txt
+InCGEUMICounts.txt
+IPUMICounts.txt
+OPCUMICounts.txt
+PerUMICounts.txt
+PgSUMICounts.txt
+ExDp1UMICounts.txt
+ExMUMICounts.txt
+ExNUMICounts.txt
+InMGEUMICounts.txt
+MicUMICounts.txt
+oRGUMICounts.txt
+PgG2MUMICounts.txt
+vRGUMICounts.txt
