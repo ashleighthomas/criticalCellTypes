@@ -1,2 +1,0 @@
-RightHandSide	1.0
-LeftHandSide	1.2174099806057879
