@@ -153,19 +153,22 @@ def getModuleGenes():
 	return moduleGenes
 
 #This reads in the coexpression for module genes, also takes in the file modifier for an output file name
-def getCoexpressionDataChunks(moduleGenes, fileModifier):
+def getCoexpressionDataChunks(moduleGenes, fileModifier,coexpEnabled):
 	#this next segment should be uncommented if you want to use actual coexpression data
-#	chunkSize = 10 ** 6
-#	fileName = 'coexpressionDFNoMaxRank' + fileModifier + '.txt'
-#	for chunk in pd.read_csv(sys.argv[2], sep='\t', chunksize = chunkSize, header=None):
-#		chunk.columns = ['geneA', 'geneB', 'coexp']
-#		chunk = chunk[(chunk['geneA'].isin(moduleGenes)) & (chunk['geneB'].isin(moduleGenes))]
-#		chunk.to_csv(fileName, mode='a',index=False,header=False,sep='\t')
-#	coexpDF = pd.read_csv(fileName, sep='\t', names=['geneA', 'geneB', 'coexp'])
+	if coexpEnabled:
+		chunkSize = 10 ** 6
+		fileName = 'coexpressionDFNoMaxRank' + fileModifier + '.txt'
+		for chunk in pd.read_csv(sys.argv[2], sep='\t', chunksize = chunkSize, header=None):
+			chunk.columns = ['geneA', 'geneB', 'coexp']
+			chunk = chunk[(chunk['geneA'].isin(moduleGenes)) & (chunk['geneB'].isin(moduleGenes))]
+			chunk.to_csv(fileName, mode='a',index=False,header=False,sep='\t')
+		coexpDF = pd.read_csv(fileName, sep='\t', names=['geneA', 'geneB', 'coexp'])
+		return coexpDF
 	#end of actual coexpression data section
+	else:
 	#this is a section of fake mini coexpression dataframe so that errors don't happen. If you want to use real coexpression data, uncomment the previous section
-	coexpDF = pd.DataFrame([['one', 'two', 5]], columns=['geneA', 'geneB', 'coexp'])
-	return coexpDF
+		coexpDF = pd.DataFrame([['one', 'two', 5]], columns=['geneA', 'geneB', 'coexp'])
+		return coexpDF
 
 #This reads in a file where the first line is a header that is the filepath location to the files, and the subsequent lines are the names of the cell type UMI count files. It returns a list of the files
 def getUMIFiles():
@@ -230,10 +233,11 @@ def rightHandSidePValue(btwnDF, withinDF):
 moduleGenes = getModuleGenes()
 fileModifier = sys.argv[6]
 comparison = float(sys.argv[7])
-coexpDF = getCoexpressionDataChunks(moduleGenes, fileModifier)
+coexpEnabled = False#set this to True if you want to take into account real coexpression information, then getCoexpressionDataChunks will read it in properly
+coexpDF = getCoexpressionDataChunks(moduleGenes, fileModifier, coexpEnabled)
 umiFilesList = getUMIFiles()
 outfile = open(sys.argv[5], 'w')
-outfile.write('Gene\tLog\tRaw\n')
+outfile.write('CellType\tLog\tRaw\n')
 for cellTypeFile in umiFilesList:
 	line = cellTypeFile.split('/')
 	cellType = line[-1]
