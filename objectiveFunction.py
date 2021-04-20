@@ -6,9 +6,12 @@
 import numpy as np
 import pandas as pd
 import sys
+import argparse
+import os
 import random
 from random import randint
 import scipy.stats as stats
+import argparse
 #function that accepts:
 #1: a pandas DataFrame (df) that represents UMI counts per barcoded cell per gene from a single cell RNA-seq dataset.
 #2: geneSum: an float representing the coexpression of genes, currently not being used.
@@ -144,9 +147,9 @@ def multiplication(lhsDict, rhsVal, comparison, fileModifier, cellType):#lhsDict
 	return logRes, result#return the log transformed result and the raw result
 
 #This obtains module genes from a file, returns a list of module genes
-def getModuleGenes():
+def getModuleGenes(filepath):
 	moduleGenes = []
-	moduleGenesFile = open(sys.argv[1], 'r')
+	moduleGenesFile = open(filepath, 'r')
 	for gene in moduleGenesFile:
 		gene = gene.strip()
 		moduleGenes.append(gene)
@@ -158,7 +161,7 @@ def getCoexpressionDataChunks(moduleGenes, fileModifier,coexpEnabled):
 	if coexpEnabled:
 		chunkSize = 10 ** 6
 		fileName = 'coexpressionDFNoMaxRank' + fileModifier + '.txt'
-		for chunk in pd.read_csv(sys.argv[2], sep='\t', chunksize = chunkSize, header=None):
+		for chunk in pd.read_csv(sys.argv[2], sep='\t', chunksize = chunkSize, header=None):#TODO when coexpression is used again, use argparse to enforce this as a positional argument rather than an optional argument as it currently is, then pass in the coexp name instead of calling sys.argv[2]
 			chunk.columns = ['geneA', 'geneB', 'coexp']
 			chunk = chunk[(chunk['geneA'].isin(moduleGenes)) & (chunk['geneB'].isin(moduleGenes))]
 			chunk.to_csv(fileName, mode='a',index=False,header=False,sep='\t')
@@ -171,8 +174,8 @@ def getCoexpressionDataChunks(moduleGenes, fileModifier,coexpEnabled):
 		return coexpDF
 
 #This reads in a file where the first line is a header that is the filepath location to the files, and the subsequent lines are the names of the cell type UMI count files. It returns a list of the files
-def getUMIFiles():
-	umiFile = open(sys.argv[3])
+def getUMIFiles(umiInputFile):
+	umiFile = open(umiInputFile)
 	location = umiFile.readline()
 	location = location.strip()
 	umiFiles = []
@@ -188,12 +191,12 @@ def getUMICount(umiInfile):
 	umiDF = umiDF.dropna()
 	return umiDF
 
-#This function reads in the output of Seurat (distance matrix) and the list of barcodes for the current cell type
+#This function reads in the output of Seurat (distance matrix, the second input) and the list of barcodes for the current cell type
 #This returns 2 dataframes. 
 #The first is a dataframe that is grabbing every barcode that is not within the same cell type as the current cell type.
 #The second is a dataframe that is only grabbing barcodes within the same cell type. 
-def getDistanceMatrix(barcodes):
-	wholeDF = pd.read_csv(sys.argv[4], usecols=barcodes,sep=',')
+def getDistanceMatrix(barcodes, distMatrixInfile):
+	wholeDF = pd.read_csv(distMatrixInfile, usecols=barcodes,sep=',')
 	subDF = wholeDF[~wholeDF.index.isin(barcodes)]#get only rows that are barcodes we want#TODO delete the ~ later, this is grabbing all rows except the barcodes for this cell type
 	subDFWithin = wholeDF[wholeDF.index.isin(barcodes)]#get only rows that are barcodes we want#TODO delete the ~ later, this is grabbing all rows except the barcodes for this cell type
 	return subDF, subDFWithin
@@ -230,13 +233,27 @@ def rightHandSidePValue(btwnDF, withinDF):
 	return result
 
 #function calls:
-moduleGenes = getModuleGenes()
-fileModifier = sys.argv[6]
-comparison = float(sys.argv[7])
+parser = argparse.ArgumentParser()
+parser.add_argument('mg',metavar='moduleGenes', type=str,help='the file name and the path to the file of module genes')
+parser.add_argument('umi',metavar='umiCountFile', type=str, help="the path to and file that is comprised of the 1st line with a path to the UMI count input files, and every subsequent line is the name of each cell type's UMI count file")
+parser.add_argument('dist', metavar='distanceMatrix',type=str,help='the path to and file containing the cell by cell distance matrix (can be generated in Seurat)')
+parser.add_argument('o',metavar='outputFile',type=str,help='the output file name')
+parser.add_argument('f',metavar='fileModifer',type=str,help='file modifier to save coexpression input in chunks; it is helpful to set this to a descriptor that indicates what run or set of module genes you are using')
+parser.add_argument('h',metavar='comparison',type=str,help='heatmap argument, where 1 means output a csv with ranked UMI counts z-scored per cell type, make this a float value')
+parser.add_argument('-c', metavar='coexpression', type=str,help='the path to the file plus the file name of the coexpression file, not currently in use, so optional')
+args = parser.parse_args()
+moduleGenesInputPath = args.mg
+umiInputFile=args.umi
+distMatrixInfile =args.dist
+outfileName=args.o
+heatmapComparison=args.h
+fileModifier = args.f
+comparison = float(heatmapComparison)
+moduleGenes = getModuleGenes(moduleGenesInputPath)
 coexpEnabled = False#set this to True if you want to take into account real coexpression information, then getCoexpressionDataChunks will read it in properly
 coexpDF = getCoexpressionDataChunks(moduleGenes, fileModifier, coexpEnabled)
-umiFilesList = getUMIFiles()
-outfile = open(sys.argv[5], 'w')
+umiFilesList = getUMIFiles(umiInputFile)
+outfile = open(outfileName, 'w')
 outfile.write('CellType\tLog\tRaw\n')
 for cellTypeFile in umiFilesList:
 	line = cellTypeFile.split('/')
@@ -245,7 +262,7 @@ for cellTypeFile in umiFilesList:
 	print('cell type:', cellType)
 	umiDF = getUMICount(cellTypeFile)
 	barcodes = umiDF.columns
-	btwnMatrix, withinMatrix = getDistanceMatrix(barcodes)#note withinMatrix is the prime distance matrix, btwnMatrix is the matrix of comparisons amongst the same cell type
+	btwnMatrix, withinMatrix = getDistanceMatrix(barcodes, distMatrixInfile)#note withinMatrix is the prime distance matrix, btwnMatrix is the matrix of comparisons amongst the same cell type
 	rhsVal = rightHandSidePValue(btwnMatrix, withinMatrix)
 	lhsDict, geneSum = leftHandSide(moduleGenes, umiDF, coexpDF,comparison)
 	objectiveFuncValueLog, rawObjectiveFunctionValue = multiplication(lhsDict, rhsVal, comparison, fileModifier, cellType)#without coexpression
