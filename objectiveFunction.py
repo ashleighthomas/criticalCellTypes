@@ -234,12 +234,12 @@ def rightHandSidePValue(btwnDF, withinDF):
 
 #function calls:
 parser = argparse.ArgumentParser()
-parser.add_argument('mg',metavar='moduleGenes', type=str,help='the file name and the path to the file of module genes')
-parser.add_argument('umi',metavar='umiCountFile', type=str, help="the path to and file that is comprised of the 1st line with a path to the UMI count input files, and every subsequent line is the name of each cell type's UMI count file")
-parser.add_argument('dist', metavar='distanceMatrix',type=str,help='the path to and file containing the cell by cell distance matrix (can be generated in Seurat)')
-parser.add_argument('o',metavar='outputFile',type=str,help='the output file name')
-parser.add_argument('f',metavar='fileModifer',type=str,help='file modifier to save coexpression input in chunks; it is helpful to set this to a descriptor that indicates what run or set of module genes you are using')
-parser.add_argument('h',metavar='comparison',type=str,help='heatmap argument, where 1 means output a csv with ranked UMI counts z-scored per cell type, make this a float value')
+parser.add_argument('mg',metavar='moduleGenes', type=str,help='The file name and the path to the file of module genes. 1st argument')
+parser.add_argument('umi',metavar='umiCountFile', type=str, help="The path to and file that is comprised of the 1st line with a path to the UMI count input files, and every subsequent line is the name of each cell type's UMI count file. 2nd argument")
+parser.add_argument('dist', metavar='distanceMatrix',type=str,help='The path to and file containing the cell by cell distance matrix (can be generated in Seurat). 3rd argument')
+parser.add_argument('o',metavar='outputFile',type=str,help='The output file name. 4th argument')
+parser.add_argument('f',metavar='fileModifer',type=str,help='File modifier to save coexpression input in chunks; it is helpful to set this to a descriptor that indicates what run or set of module genes you are using. 5th argument')
+parser.add_argument('h',metavar='comparison',type=str,help='Heatmap comparison argument, where 1 means output a csv with ranked UMI counts z-scored per cell type, make this a float value. 6th argument')
 parser.add_argument('-c', metavar='coexpression', type=str,help='the path to the file plus the file name of the coexpression file, not currently in use, so optional')
 args = parser.parse_args()
 moduleGenesInputPath = args.mg
